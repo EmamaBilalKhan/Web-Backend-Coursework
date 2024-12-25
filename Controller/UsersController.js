@@ -1,5 +1,6 @@
 const User = require('../Models/UsersModel');
-const session = require('express-session');
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
 
 const getUsers = async (req, res) => {
     try {
@@ -11,8 +12,8 @@ const getUsers = async (req, res) => {
 };
 
 const checkUserSession = (req, res) => {
-    if (req.session) {
-        res.status(200).json({ loggedIn: true });
+    if (req.session && req.session.user) {
+        res.status(200).json({loggedIn: true });
     } else {
         res.status(200).json({ loggedIn: false });
     }
@@ -20,11 +21,25 @@ const checkUserSession = (req, res) => {
 
 const authenticateUser = async (username, password) => {
     const user = await User.findOne({ username });
-    if (user && user.password === password) {
-        return user;
+    console.log(user);
+    if (user) {
+        try {
+            const result = await bcrypt.compare(password, user.password);  
+            console.log(result);
+            if (result === true) {
+                return user;
+            } else {
+                return null;
+            }
+        } catch (e) {
+            console.log(e);
+            return null;
+        }
+    } else {
+        return null;
     }
-    return null;
 };
+
 
 const loginUser = async (req, res) => {
     const { username, password } = req.body;
@@ -53,18 +68,19 @@ const logoutUser = (req, res) => {
 };
 
 const createUser = async (req, res) => {
-    const userCred = new User({
-        username: req.body.username,
-        password: req.body.password,
-    });
-
     try {
+        const hash = await bcrypt.hash(req.body.password, saltRounds);
+        const userCred = new User({
+            username: req.body.username,
+            password: hash,
+        });
         const newUser = await userCred.save();
-        res.status(201).json({message: "User created", newUser});
+        res.status(201).json({ message: "User created", newUser });
     } catch (err) {
         res.status(400).json({ message: err.message });
     }
 };
+
 
 const updateUser = async (req, res) => {
     try {
