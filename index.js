@@ -24,7 +24,14 @@ app.get("/",(req, res) => {
 });
 const userRoute = require('./Routes/Users');
 app.use('/Users', userRoute);
-
+const bookRoute = require('./Routes/Book');
+app.use('/Books', bookRoute);
+const authorRoute = require('./Routes/Author');
+app.use('/Authors', authorRoute);
+const borrowerRoute = require('./Routes/Borrower');
+app.use('/Borrowers', borrowerRoute);
+const borrowRoute = require('./Routes/borrow');
+app.use("/Borrow", borrowRoute);
 app.use((req, res, next) => {
     res.status(404).json({ message: 'Resource not found' });
 });
